@@ -1,0 +1,7 @@
+build/
+tools/cc65/
+tools/mame/
+tools/*.zip
+tools/*.exe
+.devinignore
+.idea/
