@@ -17,6 +17,8 @@
 #define R 0
 #define LOOP 0xFF
 #define END 0xFE
+#define MARK 0xFD
+#define KCK 0x8D
 #define HAT 0x81
 #define SNR 0x86
 
@@ -32,30 +34,9 @@ static const uint16_t PERIOD[61] = {
 #define Q 14
 #define H 28
 
-static const uint8_t TITLE_LEAD[] = {
-    N(A_,4),E, N(C_,5),E, N(E_,5),E, N(A_,5),E, N(G_,5),E, N(E_,5),E, N(C_,5),E, N(E_,5),E,
-    N(F_,4),E, N(A_,4),E, N(C_,5),E, N(F_,5),E, N(E_,5),E, N(C_,5),E, N(A_,4),E, N(C_,5),E,
-    N(G_,4),E, N(C_,5),E, N(E_,5),E, N(G_,5),E, N(A_,5),E, N(G_,5),E, N(E_,5),E, N(C_,5),E,
-    N(D_,5),E, N(B_,4),E, N(G_,4),E, N(B_,4),E, N(D_,5),Q, N(E_,5),Q,
-    N(A_,5),Q, N(G_,5),E, N(E_,5),E, N(C_,5),Q, N(E_,5),Q,
-    N(F_,5),Q, N(E_,5),E, N(C_,5),E, N(A_,4),Q, N(C_,5),Q,
-    N(G_,5),E, N(A_,5),E, N(G_,5),E, N(E_,5),E, N(D_,5),E, N(E_,5),E, N(G_,5),E, N(C_,6),E,
-    N(B_,5),Q, N(G_,5),E, N(D_,5),E, N(B_,4),Q, R,Q,
-    LOOP
-};
-
-static const uint8_t TITLE_BASS[] = {
-    N(A_,3),E, N(A_,3),E, N(A_,4),E, N(A_,3),E, N(A_,3),E, N(A_,3),E, N(A_,4),E, N(A_,3),E,
-    N(F_,3),E, N(F_,3),E, N(F_,4),E, N(F_,3),E, N(F_,3),E, N(F_,3),E, N(F_,4),E, N(F_,3),E,
-    N(C_,4),E, N(C_,4),E, N(C_,5),E, N(C_,4),E, N(C_,4),E, N(C_,4),E, N(C_,5),E, N(C_,4),E,
-    N(G_,3),E, N(G_,3),E, N(G_,4),E, N(G_,3),E, N(G_,3),E, N(G_,3),E, N(E_,3),E, N(E_,4),E,
-    LOOP
-};
-
-static const uint8_t TITLE_DRUM[] = {
-    HAT,E, HAT,E, SNR,E, HAT,E, HAT,E, HAT,E, SNR,E, HAT,E,
-    LOOP
-};
+extern const uint8_t SONG_A_LEAD[], SONG_A_HARM[], SONG_A_BASS[], SONG_A_DRUM[];
+extern const uint8_t SONG_F_LEAD[], SONG_F_HARM[], SONG_F_BASS[], SONG_F_DRUM[];
+extern const uint8_t SONG_H_LEAD[], SONG_H_HARM[], SONG_H_BASS[], SONG_H_DRUM[];
 
 static const uint8_t WIN_LEAD[] = {
     N(G_,4),5, N(C_,5),5, N(E_,5),5, N(G_,5),5, N(C_,6),Q, N(G_,5),E, N(C_,6),H, N(C_,6),H,
@@ -84,22 +65,24 @@ static const uint8_t GO_DRUM[] = {
     HAT,5, HAT,5, HAT,5, HAT,5, SNR,20, END
 };
 
-static const uint8_t *const SONGS[3][3] = {
-    {TITLE_LEAD, TITLE_BASS, TITLE_DRUM},
-    {WIN_LEAD, WIN_BASS, WIN_DRUM},
-    {GO_LEAD, GO_BASS, GO_DRUM},
+static const uint8_t *const SONGS[5][4] = {
+    {SONG_A_LEAD, SONG_A_BASS, SONG_A_DRUM, SONG_A_HARM},
+    {WIN_LEAD, WIN_BASS, WIN_DRUM, 0},
+    {GO_LEAD, GO_BASS, GO_DRUM, 0},
+    {SONG_F_LEAD, SONG_F_BASS, SONG_F_DRUM, SONG_F_HARM},
+    {SONG_H_LEAD, SONG_H_BASS, SONG_H_DRUM, SONG_H_HARM},
 };
 
-static const uint8_t S_TICK[] = {3, 0x86, 1, N(E_,6), 0};
-static const uint8_t S_SELECT[] = {3, 0x88, 0, N(C_,6), 6, 0x88, 1, N(G_,6), 0};
-static const uint8_t S_ENTER[] = {3, 0x89, 0, N(C_,5), 3, 0x89, 0, N(E_,5), 3, 0x89, 0, N(G_,5), 10, 0x8A, 1, N(C_,6), 0};
-static const uint8_t S_CAPTURE[] = {3, 0x4C, 0, N(C_,6), 3, 0x4B, 0, N(G_,5), 3, 0x4A, 0, N(D_,5), 3, 0x49, 0, N(A_,4), 3, 0x48, 0, N(E_,4), 10, 0x48, 1, N(C_,4), 0};
-static const uint8_t S_HOME[] = {4, 0x89, 0, N(G_,5), 4, 0x89, 0, N(C_,6), 4, 0x89, 0, N(E_,6), 14, 0x8A, 1, N(G_,6), 0};
-static const uint8_t S_SIX[] = {4, 0x89, 0, N(C_,6), 4, 0x89, 0, N(E_,6), 4, 0x89, 0, N(G_,6), 12, 0x8A, 1, N(C_,7), 0};
-static const uint8_t S_NOMOVE[] = {8, 0x88, 0, N(E_,3), 16, 0x88, 1, N(C_,3), 0};
-static const uint8_t S_SHORTCUT[] = {2, 0x47, 0, N(C_,4), 2, 0x47, 0, N(E_,4), 2, 0x47, 0, N(G_,4), 2, 0x48, 0, N(C_,5), 2, 0x48, 0, N(E_,5), 2, 0x48, 0, N(G_,5), 2, 0x49, 0, N(C_,6), 10, 0x49, 1, N(E_,6), 0};
-static const uint8_t S_JOIN[] = {3, 0x89, 0, N(G_,5), 10, 0x8A, 1, N(D_,6), 0};
-static const uint8_t S_COUNT[] = {3, 0x86, 1, N(A_,5), 0};
+static const uint8_t S_TICK[] = {3, 0x8A, 1, N(E_,6), 0};
+static const uint8_t S_SELECT[] = {3, 0x8C, 0, N(C_,6), 6, 0x8C, 1, N(G_,6), 0};
+static const uint8_t S_ENTER[] = {3, 0x8D, 0, N(C_,5), 3, 0x8D, 0, N(E_,5), 3, 0x8D, 0, N(G_,5), 10, 0x8E, 1, N(C_,6), 0};
+static const uint8_t S_CAPTURE[] = {3, 0x4F, 0, N(C_,6), 3, 0x4F, 0, N(G_,5), 3, 0x4E, 0, N(D_,5), 3, 0x4D, 0, N(A_,4), 3, 0x4C, 0, N(E_,4), 10, 0x4C, 1, N(C_,4), 0};
+static const uint8_t S_HOME[] = {4, 0x8D, 0, N(G_,5), 4, 0x8D, 0, N(C_,6), 4, 0x8D, 0, N(E_,6), 14, 0x8E, 1, N(G_,6), 0};
+static const uint8_t S_SIX[] = {4, 0x8D, 0, N(C_,6), 4, 0x8D, 0, N(E_,6), 4, 0x8D, 0, N(G_,6), 12, 0x8E, 1, N(C_,7), 0};
+static const uint8_t S_NOMOVE[] = {8, 0x8C, 0, N(E_,3), 16, 0x8C, 1, N(C_,3), 0};
+static const uint8_t S_SHORTCUT[] = {2, 0x4B, 0, N(C_,4), 2, 0x4B, 0, N(E_,4), 2, 0x4B, 0, N(G_,4), 2, 0x4C, 0, N(C_,5), 2, 0x4C, 0, N(E_,5), 2, 0x4C, 0, N(G_,5), 2, 0x4D, 0, N(C_,6), 10, 0x4D, 1, N(E_,6), 0};
+static const uint8_t S_JOIN[] = {3, 0x8D, 0, N(G_,5), 10, 0x8E, 1, N(D_,6), 0};
+static const uint8_t S_COUNT[] = {3, 0x8A, 1, N(A_,5), 0};
 
 static const uint8_t NZ_CLACK[] = {4, 0x0B, 1, 0x02, 0};
 static const uint8_t NZ_CAPTURE[] = {30, 0x0F, 2, 0x0B, 0};
@@ -125,10 +108,11 @@ typedef struct {
     uint8_t decay;
     uint8_t dc;
     uint8_t note;
-    uint8_t lastHi;
 } Sfx;
 
-static Track mus[3];
+static Track mus[4];
+static uint8_t p2_hi = 0xFF;
+static uint8_t cur_song = 0xFF;
 static Sfx sp, sn;
 static uint8_t step_buf[9];
 static uint8_t lead_hi = 0xFF;
@@ -142,25 +126,39 @@ void sound_init(void) {
     APU[0x04] = 0x30;
     APU[0x08] = 0x80;
     APU[0x0C] = 0x30;
+    APU[0x11] = 48;
 }
 
 void music_play(uint8_t id) {
     uint8_t c;
-    for (c = 0; c < 3; c++) {
+    if (id == cur_song && mus[0].ptr) return;
+    cur_song = id;
+    for (c = 0; c < 4; c++) {
         mus[c].start = SONGS[id][c];
         mus[c].ptr = mus[c].start;
         mus[c].timer = 0;
         mus[c].vol = 0;
+#ifdef JUKEBOX_MASK
+        if (!(JUKEBOX_MASK & (1 << c))) mus[c].ptr = 0;
+#endif
     }
+    if (!sp.ptr && !sp.timer) APU[0x04] = 0x30;
     lead_hi = 0xFF;
+    p2_hi = 0xFF;
+}
+
+uint8_t music_current(void) {
+    return mus[0].ptr ? cur_song : 0xFF;
 }
 
 void music_stop(void) {
     uint8_t c;
-    for (c = 0; c < 3; c++) mus[c].ptr = 0;
+    for (c = 0; c < 4; c++) mus[c].ptr = 0;
+    cur_song = 0xFF;
     APU[0x00] = 0x30;
     APU[0x08] = 0x80;
     APU[0x0B] = 0;
+    if (!sp.ptr && !sp.timer) APU[0x04] = 0x30;
     if (!sn.ptr) APU[0x0C] = 0x30;
 }
 
@@ -168,7 +166,7 @@ void sfx_play(uint8_t id) {
     if (SFX_P[id]) {
         sp.ptr = SFX_P[id];
         sp.timer = 0;
-        sp.lastHi = 0xFF;
+        p2_hi = 0xFF;
     }
     if (SFX_N[id]) {
         sn.ptr = SFX_N[id];
@@ -178,12 +176,12 @@ void sfx_play(uint8_t id) {
 
 void sfx_step(uint8_t n) {
     uint8_t base = N(C_,5) + ((n * 2) % 24);
-    step_buf[0] = 2; step_buf[1] = 0x8A; step_buf[2] = 0; step_buf[3] = base;
-    step_buf[4] = 5; step_buf[5] = 0x88; step_buf[6] = 1; step_buf[7] = base + 7;
+    step_buf[0] = 2; step_buf[1] = 0x8E; step_buf[2] = 0; step_buf[3] = base;
+    step_buf[4] = 5; step_buf[5] = 0x8C; step_buf[6] = 1; step_buf[7] = base + 7;
     step_buf[8] = 0;
     sp.ptr = step_buf;
     sp.timer = 0;
-    sp.lastHi = 0xFF;
+    p2_hi = 0xFF;
 }
 
 static uint8_t next_step(Sfx *s) {
@@ -220,9 +218,9 @@ static void update_sfx(void) {
                 hi = (uint8_t)(p >> 8);
                 APU[0x04] = (sp.vol & 0xCF) | 0x30;
                 APU[0x06] = (uint8_t)p;
-                if (hi != sp.lastHi) {
+                if (hi != p2_hi) {
                     APU[0x07] = hi | 0xF8;
-                    sp.lastHi = hi;
+                    p2_hi = hi;
                 }
             } else {
                 APU[0x04] = 0x30;
@@ -244,15 +242,21 @@ static void update_sfx(void) {
     }
 }
 
+static const int8_t VIB[8] = {0, 1, 2, 1, 0, -1, -2, -1};
+
 static void update_music(void) {
     Track *t;
-    uint8_t c, b;
+    uint8_t c, b, age;
     uint16_t p;
-    for (c = 0; c < 3; c++) {
+    for (c = 0; c < 4; c++) {
         t = &mus[c];
         if (!t->ptr) continue;
         if (!t->timer) {
             b = *t->ptr;
+            if (b == MARK) {
+                t->start = ++t->ptr;
+                b = *t->ptr;
+            }
             if (b == LOOP) {
                 t->ptr = t->start;
                 b = *t->ptr;
@@ -261,6 +265,7 @@ static void update_music(void) {
                 t->ptr = 0;
                 if (c == 0) APU[0x00] = 0x30;
                 else if (c == 1) APU[0x08] = 0x80;
+                else if (c == 3) { if (!sp.ptr && !sp.timer) APU[0x04] = 0x30; }
                 else if (!sn.ptr && !sn.timer) APU[0x0C] = 0x30;
                 continue;
             }
@@ -269,7 +274,7 @@ static void update_music(void) {
             t->timer = t->len;
             t->ptr += 2;
             if (c == 0) {
-                t->vol = b ? 11 : 0;
+                t->vol = b ? 15 : 0;
                 if (b) {
                     p = PERIOD[b - 1];
                     APU[0x02] = (uint8_t)p;
@@ -287,13 +292,38 @@ static void update_music(void) {
                 } else {
                     APU[0x08] = 0x80;
                 }
+            } else if (c == 3) {
+                t->vol = b ? 11 : 0;
             } else {
-                t->vol = b == SNR ? 9 : (b ? 5 : 0);
+                t->vol = b == SNR ? 15 : (b == KCK ? 15 : (b ? 6 : 0));
             }
         }
+        age = t->len - t->timer;
+        if (c == 3) {
+            if (!sp.ptr && !sp.timer) {
+                APU[0x04] = 0x30 | t->vol;
+                if (t->note) {
+                    p = PERIOD[t->note - 1];
+                    APU[0x06] = (uint8_t)p;
+                    if ((uint8_t)(p >> 8) != p2_hi) {
+                        p2_hi = (uint8_t)(p >> 8);
+                        APU[0x07] = p2_hi | 0xF8;
+                    }
+                }
+            }
+            if (t->vol > 7 && !(t->timer & 3)) t->vol--;
+            if (t->timer == 1) t->vol = t->vol > 1 ? t->vol - 1 : 0;
+            t->timer--;
+            continue;
+        }
         if (c == 0) {
-            APU[0x00] = 0x70 | t->vol;
-            if (t->vol > 6 && !(t->timer & 3)) t->vol--;
+            if (t->note && t->len >= 20 && age >= 12) {
+                p = PERIOD[t->note - 1];
+                p += (int8_t)VIB[(age >> 1) & 7] * (int16_t)((p >> 7) + 1);
+                if ((uint8_t)(p >> 8) == lead_hi) APU[0x02] = (uint8_t)p;
+            }
+            APU[0x00] = 0x70 | ((sp.ptr || sp.timer || sn.ptr) && t->vol > 4 ? t->vol - 4 : t->vol);
+            if (t->vol > 11 && !(t->timer & 3)) t->vol--;
             if (t->timer == 1) t->vol = t->vol > 2 ? t->vol - 2 : 0;
         } else if (c == 1) {
             if (t->timer == 1 && t->note) {
@@ -303,11 +333,15 @@ static void update_music(void) {
         } else if (!sn.ptr && !sn.timer) {
             if (t->vol) {
                 APU[0x0C] = 0x30 | t->vol;
-                if (t->timer == t->len) {
-                    APU[0x0E] = t->note & 0x0F;
+                if (age == 0) {
+                    APU[0x0E] = t->note == SNR ? 0x04 : (t->note & 0x0F);
                     APU[0x0F] = 0xF8;
+                } else if (age == 1) {
+                    if (t->note == SNR) APU[0x0E] = 0x06;
+                    else if (t->note == KCK) APU[0x0E] = 0x0F;
                 }
-                t->vol = t->vol > 2 ? t->vol - 2 : 0;
+                b = t->note == SNR ? 1 : 3;
+                t->vol = t->vol > b ? t->vol - b : 0;
             } else {
                 APU[0x0C] = 0x30;
             }

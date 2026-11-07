@@ -207,6 +207,15 @@ addSpr('DOT', sprDot());
 addSpr('SPARK0', sprSpark(0));
 addSpr('SPARK1', sprSpark(1));
 spr = (spr + 3) & ~3;
+{
+  const m = sprMarble();
+  sprDefs.push(`#define SPR_MARBLE_SH ${spr}`);
+  for (let s = 1; s < 8; s++) {
+    const sh = canvas(16, 16, 0);
+    each(sh, (x, y) => { const cx = x & 7, src = cx + s; if (src < 8) sh[y][x] = m[y][(x & 8) + src]; });
+    for (const b of split(sh)) chr.set(b, 0x1000 + 16 * spr++);
+  }
+}
 for (let n = 1; n <= 6; n++) addSpr(`DIE${n}`, sprDie(n));
 addSpr('SPIN0', sprDieSpin(0));
 addSpr('SPIN1', sprDieSpin(1));

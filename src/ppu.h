@@ -36,5 +36,6 @@ void pal_col(uint8_t idx, uint8_t col);
 void oam_clear(void);
 uint8_t oam_spr(uint8_t x, uint8_t y, uint8_t tile, uint8_t attr, uint8_t id);
 uint8_t oam_meta(uint8_t x, uint8_t y, uint8_t tile, uint8_t attr, uint8_t id);
+uint8_t oam_meta_x(int16_t x, uint8_t y, uint8_t tile, uint8_t attr, uint8_t id);
 
 #endif

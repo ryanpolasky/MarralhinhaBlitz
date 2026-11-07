@@ -18,7 +18,7 @@ enum {
     SFX_LAND
 };
 
-enum { MUS_TITLE, MUS_WIN, MUS_GO };
+enum { MUS_TITLE, MUS_WIN, MUS_GO, MUS_FAITHFUL, MUS_HYBRID };
 
 void sound_init(void);
 void sound_update(void);
@@ -26,5 +26,6 @@ void sfx_play(uint8_t id);
 void sfx_step(uint8_t n);
 void music_play(uint8_t id);
 void music_stop(void);
+uint8_t music_current(void);
 
 #endif

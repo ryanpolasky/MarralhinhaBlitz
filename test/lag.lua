@@ -1,26 +1,19 @@
 dofile("test/harness.lua")
 
-local TICK = sym("_tick")
-local schedule = { { f = 60, p = 1, press = "Start" }, { f = 130, p = 1, press = "Start" } }
-for f = 200, 8000, 10 do table.insert(schedule, { f = f, p = 1, press = "A", len = 3 }) end
+local START = tonumber(os.getenv("LAG_START") or "300")
+local STOP = tonumber(os.getenv("LAG_STOP") or "500")
+local schedule = {}
+if os.getenv("LAG_PLAY") then
+  schedule = { { f = 60, p = 1, press = "Start" }, { f = 130, p = 1, press = "Start" } }
+  for f = 200, STOP, 10 do table.insert(schedule, { f = f, p = 1, press = "A", len = 3 }) end
+end
 
-local last, lagged, total, worst, run_len = nil, 0, 0, 0, 0
-run(schedule, function(frame)
-  if frame < 200 then return end
-  local t = mem:read_u8(TICK)
-  if last then
-    total = total + 1
-    if t == last then
-      lagged = lagged + 1
-      run_len = run_len + 1
-      if run_len > worst then worst = run_len end
-    else
-      run_len = 0
-    end
-  end
-  last = t
-  if frame == 8000 then
-    print(string.format("frames=%d lagged=%d (%.1f%%) worst_streak=%d", total, lagged, 100 * lagged / total, worst))
+local frame, dma = 0, 0
+tap = mem:install_write_tap(0x4014, 0x4014, "dma", function() if frame > START and frame <= STOP then dma = dma + 1 end end)
+run(schedule, function(f)
+  frame = f
+  if f == STOP then
+    print(string.format("game loops (OAM DMAs) %d in %d frames", dma, STOP - START))
     manager.machine:exit()
   end
 end)

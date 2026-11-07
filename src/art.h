@@ -31,14 +31,15 @@
 #define SPR_DOT 16
 #define SPR_SPARK0 17
 #define SPR_SPARK1 18
-#define SPR_DIE1 20
-#define SPR_DIE2 24
-#define SPR_DIE3 28
-#define SPR_DIE4 32
-#define SPR_DIE5 36
-#define SPR_DIE6 40
-#define SPR_SPIN0 44
-#define SPR_SPIN1 48
+#define SPR_MARBLE_SH 20
+#define SPR_DIE1 48
+#define SPR_DIE2 52
+#define SPR_DIE3 56
+#define SPR_DIE4 60
+#define SPR_DIE5 64
+#define SPR_DIE6 68
+#define SPR_SPIN0 72
+#define SPR_SPIN1 76
 
 extern const uint8_t MT_TILES[MT_COUNT][4];
 extern const uint8_t LOGO_TILES[5][16];

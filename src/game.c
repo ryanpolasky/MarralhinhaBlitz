@@ -24,10 +24,15 @@ static const uint8_t PY[4] = {27, 1, 1, 27};
 static const char *const NAMES[4] = {"RED", "BLUE", "GOLD", "GREEN"};
 static const int8_t THROW_DX[4] = {40, 40, -40, -40};
 static const int8_t THROW_DY[4] = {40, -40, -40, 40};
+static const uint8_t THEME_SONG[3] = {MUS_TITLE, MUS_HYBRID, MUS_FAITHFUL};
+static const uint8_t BOB3[16] = {0, 3, 6, 9, 9, 12, 12, 12, 12, 12, 12, 9, 9, 6, 3, 0};
+static int16_t mx[4] = {-16, 52, 120, 188};
 static const uint8_t BOB[16] = {0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 2, 1, 0};
 
 static uint8_t human[4];
-static uint8_t demo, demo_pad, abort_flag, base_scroll, shake;
+static uint8_t demo, demo_pad, abort_flag, base_scroll, shake, intense;
+uint8_t theme = 1;
+uint8_t theme_req = 0xFF;
 static uint16_t demo_timer;
 uint8_t tick;
 static char sbuf[12];
@@ -84,7 +89,7 @@ static uint8_t draw_sprites(void) {
         id = oam_spr((uint8_t)(spx[i] >> 3), (uint8_t)(spy[i] >> 3), (slife[i] & 4) ? SPR_SPARK0 : SPR_SPARK1, spal[i], id);
     }
     for (i = 0; i < 2; i++)
-        if (fly_on[i]) id = oam_meta((uint8_t)fly_x[i], (uint8_t)fly_y[i], SPR_MARBLE, fly_seat[i], id);
+        if (fly_on[i]) id = oam_meta_x(fly_x[i] - off, (uint8_t)fly_y[i], SPR_MARBLE, fly_seat[i], id);
     if (cursor_on && game.phase == PHASE_MOVE) {
         m = &game.moves[sel];
         pos_h(m->seat, m->marble, &m->to, &hr, &hc);
@@ -106,16 +111,39 @@ static uint8_t draw_sprites(void) {
             y -= t;
             id = oam_meta(x, y - 18, SPR_ARROW, die_seat, id);
         }
-        if (die_y > -16 && die_y < 232 && die_x > -16 && die_x < 256) id = oam_meta(x, y, die_tile, die_seat, id);
+        if (die_y > -16 && die_y < 232) id = oam_meta_x(die_x - off, y, die_tile, die_seat, id);
     }
     return id;
 }
 
+#ifdef PROFILE
+#define PROF(n) (*(volatile uint8_t *)0x5000 = (n))
+#else
+#define PROF(n)
+#endif
+
+static uint8_t snd_frame;
+
 static void frame(void) {
+    uint8_t b;
+    PROF(1);
     board_update();
+    PROF(2);
     wait_frame();
-    sound_update();
+    PROF(3);
+    while (snd_frame != frame_cnt) {
+        sound_update();
+        snd_frame++;
+    }
+    PROF(4);
     input_poll();
+    PROF(5);
+    if (theme_req < 3) {
+        theme = theme_req;
+        theme_req = 0xFF;
+        b = music_current();
+        if (!intense && (b == MUS_TITLE || b == MUS_HYBRID || b == MUS_FAITHFUL)) music_play(THEME_SONG[theme]);
+    }
     tick++;
     if (shake) {
         shake--;
@@ -188,6 +216,13 @@ static char *seat_str(uint8_t seat, const char *tail) {
     sbuf[2] = ' ';
     strcpy(sbuf + 3, tail);
     return sbuf;
+}
+
+static uint8_t home_count(uint8_t seat) {
+    uint8_t i, n = 0;
+    for (i = 0; i < MARBLES; i++)
+        if (game.marbles[seat][i].zone == ZONE_HOME) n++;
+    return n;
 }
 
 static void panel_text(uint8_t seat, uint8_t row, const char *s, uint8_t colored) {
@@ -359,6 +394,14 @@ static void animate_move(uint8_t index) {
         sfx_play(SFX_LAND);
     }
     panel_draw(seat, 0);
+    if (!intense && game.phase != PHASE_OVER && home_count(seat) == MARBLES - 1) {
+        intense = 1;
+        music_play(MUS_TITLE);
+        msg_bot("LAST ONE!");
+        sfx_play(SFX_SIX);
+        shake = 10;
+        wait_frames(30);
+    }
     wait_frames(8);
 }
 
@@ -418,14 +461,16 @@ static void play(void) {
     center_pal(s);
     msg_top(seat_str(s, "FIRST!"));
     msg_bot(demo ? "DEMO PLAY" : "GET READY");
+    intense = 0;
     if (!demo) music_play(MUS_GO);
     show_die_at(s);
     wait_frames(80);
+    music_play(THEME_SONG[theme]);
     while (!abort_flag) {
         s = game.turn;
         center_pal(s);
         msg_top(seat_str(s, "TURN"));
-        msg_bot(demo ? "PRESS START" : (human[s] ? "PRESS A" : "CPU"));
+        msg_bot(demo ? "PUSH START" : (human[s] ? "PRESS A" : "CPU"));
         if (human[s]) sfx_play(SFX_JOIN);
         show_die_at(s);
         wait_roll(s);
@@ -446,7 +491,7 @@ static void play(void) {
             wait_frames(demo ? 18 : 28);
             continue;
         }
-        msg_bot(human[s] ? "PICK MOVE" : (demo ? "PRESS START" : "CPU"));
+        msg_bot(human[s] ? "PICK MOVE" : (demo ? "PUSH START" : "CPU"));
         i = pick_move(s);
         if (abort_flag) break;
         mv = game.moves[i];
@@ -486,6 +531,7 @@ static void start_match(void) {
     play();
 }
 
+#ifndef WEB
 static uint8_t join_screen(uint8_t first) {
     uint16_t t = 0;
     uint8_t i, secs = 0xFF, joined;
@@ -524,6 +570,7 @@ static uint8_t join_screen(uint8_t first) {
         idle();
     }
 }
+#endif
 
 static void title_draw(void) {
     uint8_t l, r;
@@ -541,6 +588,7 @@ static void title_draw(void) {
     text_put(6, 15, "4 PLAYER MARBLE MAYHEM", 22, 1);
     for (l = 3; l <= 13; l++) attr_set(l, 7, 2);
     text_put(8, 25, "A RYCADE ORIGINAL", 17, 1);
+    text_put(7, 27, "(C) 2026 RYAN POLASKY", 21, 0);
     for (l = 4; l <= 12; l++) attr_set(l, 12, 1);
     attr_upload();
     base_scroll = 8;
@@ -555,24 +603,26 @@ static void reset_colors(void) {
 
 static uint8_t title_screen(void) {
     uint16_t t;
-    uint8_t i, p, x, id;
+    uint8_t i, p, id;
     die_vis = 0;
     fly_on[0] = fly_on[1] = 0;
     cursor_on = 0;
     memset(slife, 0, sizeof(slife));
     title_draw();
     pal_bright(0);
-    music_play(MUS_TITLE);
+    music_play(THEME_SONG[theme]);
     fade(1);
     for (t = 0; t < 900; t++) {
         if ((t & 31) == 0) text_put(11, 19, (t & 32) ? "" : "PRESS START", 11, 0);
         if ((t & 7) == 0)
             for (i = 0; i < 4; i++) pal_col(i * 4 + 2, SEAT_COL[(i + (t >> 3)) & 3]);
         if ((t & 15) == 0) spark_burst(40 + (rand() & 127) + (rand() & 31), 46 + (rand() & 31) + (rand() & 15), (uint8_t)(rand() & 3), 1);
+        PROF(6);
         id = draw_sprites();
+        PROF(7);
         for (i = 0; i < 4; i++) {
-            x = (uint8_t)(t + i * 64);
-            id = oam_meta(x, 176 - BOB[((t >> 1) + i * 4) & 15] * 3, SPR_MARBLE, i, id);
+            if (++mx[i] > 255) mx[i] = -16;
+            id = oam_meta_x(mx[i], 176 - BOB3[((t >> 1) + i * 4) & 15], SPR_MARBLE, i, id);
         }
         frame();
         p = any_start();
@@ -592,7 +642,6 @@ static uint8_t title_screen(void) {
 
 static uint8_t run_demo(void) {
     memset(human, 0, sizeof(human));
-    music_stop();
     setup_board();
     pal_bright(0);
     fade(1);
@@ -603,7 +652,6 @@ static uint8_t run_demo(void) {
     start_match();
     demo = 0;
     abort_flag = 0;
-    music_stop();
     fade(0);
     return demo_pad;
 }
@@ -618,11 +666,20 @@ void game_run(void) {
         if (p == NONE) p = run_demo();
         if (p == NONE) continue;
         srand(((uint16_t)tick << 8) ^ demo_timer ^ frame_cnt);
-        music_stop();
+#ifdef WEB
+        memset(human, 0, sizeof(human));
+        human[p] = 1;
+        setup_board();
+        pal_bright(0);
+        fade(1);
+        abort_flag = 0;
+        start_match();
+#else
         if (join_screen(p)) {
             abort_flag = 0;
             start_match();
         }
+#endif
         music_stop();
         fade(0);
     }

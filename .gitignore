@@ -5,3 +5,4 @@ tools/*.zip
 tools/*.exe
 .devinignore
 .idea/
+snap/

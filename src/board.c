@@ -83,8 +83,9 @@ void text_put(uint8_t tx, uint8_t ty, const char *s, uint8_t w, uint8_t colored)
 
 void text_center(uint8_t ty, const char *s, uint8_t colored) {
     uint8_t len = (uint8_t)strlen(s);
-    uint8_t pad = (10 - len) >> 1;
-    uint8_t i;
+    uint8_t pad, i;
+    if (len > 10) len = 10;
+    pad = (10 - len) >> 1;
     for (i = 0; i < 10; i++) tbuf[i] = colored ? 0x60 : 0x20;
     for (i = 0; i < len; i++) tbuf[pad + i] = colored ? (uint8_t)s[i] + 0x40 : (uint8_t)s[i];
     tiles_put(12, ty, tbuf, 10);
@@ -166,7 +167,7 @@ static uint8_t room(void) {
 }
 
 void board_update(void) {
-    uint8_t i, b;
+    uint8_t i, b, k;
     while (tq_n && room() >= tq_len[tq_head] + 3) {
         vbuf_put(tq_addr[tq_head], tq_data[tq_head], tq_len[tq_head]);
         tq_head = (tq_head + 1) & (TQ - 1);
@@ -177,12 +178,14 @@ void board_update(void) {
         cq_head = (cq_head + 1) % CQ;
         cq_n--;
     }
-    for (i = 0; i < 64; i++) {
-        b = 1 << (i & 7);
-        if (!(attr_dirty[i >> 3] & b)) continue;
-        if (room() < 4) break;
-        vbuf_byte(0x23C0 + i, attr[i]);
-        attr_dirty[i >> 3] &= ~b;
+    for (k = 0; k < 8; k++) {
+        if (!attr_dirty[k]) continue;
+        for (i = k << 3, b = 1; b; i++, b <<= 1) {
+            if (!(attr_dirty[k] & b)) continue;
+            if (room() < 4) return;
+            vbuf_byte(0x23C0 + i, attr[i]);
+            attr_dirty[k] &= ~b;
+        }
     }
 }
 

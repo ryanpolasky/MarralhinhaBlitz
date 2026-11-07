@@ -173,6 +173,41 @@ nmi:
 irq:
     rti
 
+.export _input_raw, _in_a0, _in_a1, _in_b0, _in_b1
+
+.segment "BSS"
+_in_a0: .res 3
+_in_a1: .res 3
+_in_b0: .res 3
+_in_b1: .res 3
+
+.segment "CODE"
+_input_raw:
+    lda #1
+    sta $4016
+    lda #0
+    sta $4016
+    ldx #0
+@byte:
+    ldy #8
+@bit:
+    lda $4016
+    lsr a
+    ror _in_a0,x
+    lsr a
+    ror _in_a1,x
+    lda $4017
+    lsr a
+    ror _in_b0,x
+    lsr a
+    ror _in_b1,x
+    dey
+    bne @bit
+    inx
+    cpx #3
+    bne @byte
+    rts
+
 .segment "VECTORS"
     .word nmi
     .word reset

@@ -1,4 +1,5 @@
 #include "ppu.h"
+#include "art.h"
 
 #define PPU_ADDR (*(volatile uint8_t *)0x2006)
 #define PPU_DATA (*(volatile uint8_t *)0x2007)
@@ -103,9 +104,55 @@ uint8_t oam_spr(uint8_t x, uint8_t y, uint8_t tile, uint8_t attr, uint8_t id) {
     return id + 4;
 }
 
+static uint8_t c_y, c_t, c_a, c_x;
+
+static uint8_t column(uint8_t id) {
+    register uint8_t *o = &oam[id];
+    o[0] = c_y - 1;
+    o[1] = c_t;
+    o[2] = c_a;
+    o[3] = c_x;
+    o[4] = c_y + 7;
+    o[5] = c_t + 2;
+    o[6] = c_a;
+    o[7] = c_x;
+    return id + 8;
+}
+
+uint8_t oam_meta_x(int16_t x, uint8_t y, uint8_t tile, uint8_t attr, uint8_t id) {
+    uint8_t s;
+    c_y = y;
+    c_a = attr;
+    if (x <= -16 || x >= 256) return id;
+    if (x >= 0) {
+        c_x = (uint8_t)x;
+        c_t = tile;
+        id = column(id);
+    } else if (x > -8 && tile == SPR_MARBLE) {
+        c_x = 0;
+        c_t = SPR_MARBLE_SH + (((uint8_t)-x - 1) << 2);
+        id = column(id);
+    }
+    if (x >= -8 && x < 248) {
+        c_x = (uint8_t)x + 8;
+        c_t = tile + 1;
+        id = column(id);
+    } else if (x < -8 && tile == SPR_MARBLE) {
+        s = (uint8_t)(-8 - x);
+        c_x = 0;
+        c_t = SPR_MARBLE_SH + ((s - 1) << 2) + 1;
+        id = column(id);
+    }
+    return id;
+}
+
 uint8_t oam_meta(uint8_t x, uint8_t y, uint8_t tile, uint8_t attr, uint8_t id) {
-    id = oam_spr(x, y, tile, attr, id);
-    id = oam_spr(x + 8, y, tile + 1, attr, id);
-    id = oam_spr(x, y + 8, tile + 2, attr, id);
-    return oam_spr(x + 8, y + 8, tile + 3, attr, id);
+    c_y = y;
+    c_a = attr;
+    c_x = x;
+    c_t = tile;
+    id = column(id);
+    c_x = x + 8;
+    c_t = tile + 1;
+    return column(id);
 }

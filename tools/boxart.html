@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: 'Fredoka'; font-weight: 700; src: url('../web/fonts/fredoka-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Fredoka'; font-weight: 600; src: url('../web/fonts/fredoka-latin-600-normal.woff2') format('woff2'); }
+  html, body { margin: 0; width: 512px; height: 731px; overflow: hidden; background: #000; }
+  .box {
+    position: relative; width: 512px; height: 731px; overflow: hidden;
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 22px),
+      radial-gradient(ellipse at 50% 38%, #1f5a4f 0%, #0b1f24 55%, #050d10 100%);
+    font-family: 'Fredoka', sans-serif; color: #fff6e8;
+  }
+  .logo { position: absolute; top: 36px; left: 50%; transform: translateX(-50%); image-rendering: pixelated; width: 448px; filter: drop-shadow(0 5px 0 rgba(0,0,0,0.6)) drop-shadow(0 0 24px rgba(255,209,102,0.25)); }
+  .shot { position: absolute; top: 240px; left: 50%; width: 318px; height: 298px; transform: translateX(-50%) rotate(-5deg); border: 6px solid #fff6e8; border-radius: 6px; box-shadow: 0 18px 40px rgba(0,0,0,0.7); background: url('../build/media/game3x.png') center / cover; image-rendering: pixelated; }
+  .shot::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, rgba(0,0,0,0.18) 0 1px, transparent 1px 3px); }
+  .m { position: absolute; width: 72px; image-rendering: pixelated; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.6)); }
+  .m0 { left: 28px; top: 208px; transform: rotate(-12deg); }
+  .m1 { right: 22px; top: 268px; width: 84px; }
+  .m2 { left: 34px; top: 506px; width: 60px; }
+  .m3 { right: 40px; top: 532px; width: 66px; }
+  .trail { position: absolute; height: 10px; border-radius: 10px; opacity: 0.55; }
+  .t0 { left: -10px; top: 240px; width: 52px; background: linear-gradient(90deg, transparent, #e03a3e); }
+  .t1 { right: -10px; top: 308px; width: 40px; background: linear-gradient(270deg, transparent, #2f7de1); }
+  .die { position: absolute; width: 88px; right: 96px; top: 452px; transform: rotate(14deg); image-rendering: pixelated; filter: drop-shadow(0 10px 8px rgba(0,0,0,0.6)); }
+  .burst { position: absolute; left: 50%; top: 380px; width: 520px; height: 520px; transform: translate(-50%, -50%); background: repeating-conic-gradient(rgba(255,209,102,0.09) 0 8deg, transparent 8deg 20deg); border-radius: 50%; -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); }
+  .tag { position: absolute; left: 0; right: 0; top: 584px; text-align: center; font-size: 22px; font-weight: 600; color: #ffd166; text-shadow: 0 3px 0 rgba(0,0,0,0.6); letter-spacing: 0.02em; }
+  .foot { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-weight: 600; font-size: 12px; letter-spacing: 0.14em; color: rgba(185, 203, 199, 0.55); }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="burst"></div>
+    <img class="logo" src="../build/media/logo_pixel.png" alt="" />
+    <div class="trail t0"></div>
+    <div class="trail t1"></div>
+    <div class="shot"></div>
+    <img class="m m0" src="../build/media/marble0.png" alt="" />
+    <img class="m m1" src="../build/media/marble1.png" alt="" />
+    <img class="m m2" src="../build/media/marble2.png" alt="" />
+    <img class="m m3" src="../build/media/marble3.png" alt="" />
+    <img class="die" src="../build/media/die6.png" alt="" />
+    <div class="tag">Race. Roll. Knock 'em home!</div>
+    <div class="foot">A RYCADE ORIGINAL &nbsp;·&nbsp; (C) 2026 RYAN POLASKY</div>
+  </div>
+</body>
+</html>
